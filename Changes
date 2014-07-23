@@ -1,8 +1,11 @@
 Revision history for Perl module Mojolicious::Plugin::HTMLTemplateProRenderer
 
-0.02 
-	- Applied Perl::Tidy to class code
-	- Add support for inline __DATA__ template
+0.03
+    - Add support for HTML::Template::Pro::Extension
+
+0.02 Wed Jul 23 19:30:00 2014
+    - Applied Perl::Tidy to class code
+    - Add support for inline __DATA__ template
 
 0.01 Mon Jul 21 12:40:33 2014
     - original version; created by ExtUtils::ModuleMaker 0.52
