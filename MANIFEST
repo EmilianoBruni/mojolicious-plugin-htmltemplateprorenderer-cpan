@@ -1,5 +1,4 @@
 Changes
-lib/Mojolicious/Plugin/.HTMLTemplateProRenderer.pm.swp
 lib/Mojolicious/Plugin/HTMLTemplateProRenderer.pm
 LICENSE
 Makefile.PL
