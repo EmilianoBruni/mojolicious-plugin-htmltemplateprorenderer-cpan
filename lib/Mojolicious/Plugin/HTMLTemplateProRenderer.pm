@@ -1,5 +1,6 @@
 package Mojolicious::Plugin::HTMLTemplateProRenderer;
 
+use 5.006;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use HTML::Template::Pro;
