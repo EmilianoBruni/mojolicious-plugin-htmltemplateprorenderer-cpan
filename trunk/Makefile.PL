@@ -7,7 +7,8 @@ WriteMakefile(
 	PREREQ_PM    => {
                      	'Test::Simple' => 0.44,
 			'Mojolicious' => '4.0', 
-			'HTML::Template::Pro' => '0.45'
+			'HTML::Template::Pro' => '0.45',
+			'HTML::Template::Pro' => '0.10',
                     },
 	MIN_PERL_VERSION => '5.006',
 	test         => {TESTS => 't/*.t'}

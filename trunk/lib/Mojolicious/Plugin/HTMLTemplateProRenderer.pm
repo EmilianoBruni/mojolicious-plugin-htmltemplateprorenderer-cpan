@@ -4,13 +4,14 @@ use 5.006;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use HTML::Template::Pro;
+use HTML::Template::Pro::Extension;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub register {
 	my ( $self, $app, $conf ) = @_;
 	$self->{plugin_config} = $conf;
-	$app->renderer->add_handler( tmpl => sub{ $self->render_tmpl(@_)} );
+	$app->renderer->add_handler( tmpl => sub { $self->render_tmpl(@_) } );
 }
 
 sub render_tmpl {
@@ -32,26 +33,60 @@ sub render_tmpl {
 		push @template_dirs, $c->app->home->rel_dir("templates/$controller");
 	}
 
+	my $t;
 	my %t_options;
 
-	$t_options{die_on_bad_params}      = 0;
-	$t_options{global_vars}            = 1;
-	$t_options{loop_context_vars}      = 1;
-	$t_options{path}                   = \@template_dirs;
-	$t_options{search_path_on_include} = 1;
-
-	if ( defined( $options->{inline} ) ) {
-		$t_options{scalarref} = \$options->{inline};
-	}
-	elsif ( defined( $options->{template} ) ) {
-		if (defined (my $path = $r->template_path($options))) {
-			$t_options{filename} = $path;
-			$t_options{cache}    = 1;
-		} else {
-			$t_options{scalarref} = $r->get_data_template($options);
+	if ( $conf->{tmpl_opts}->{use_extension}
+		|| delete $tmpl_params{use_extension} )
+	{
+		if ( defined( $options->{inline} ) ) {
+			$t_options{tmplfile} = \$options->{inline};
+		}
+		elsif ( defined( $options->{template} ) ) {
+			if ( defined( my $path = $r->template_path($options) ) ) {
+				$t_options{tmplfile} = $path;
+				$t_options{cache}    = 1;
+			}
+			else {
+				$t_options{tmplfile} = \$r->get_data_template($options);
+			}
 		}
 
+		my $plugins = $conf->{tmpl_opts}->{plugins} || [];
+		$plugins = [ @$plugins, @{ $tmpl_params{plugins} } ]
+		  if exists $tmpl_params{plugins};
+		$t_options{plugins} = $plugins;
+		$t = new HTML::Template::Pro::Extension(%t_options);
 	}
+	else {
+		$t_options{die_on_bad_params}      = 0;
+		$t_options{global_vars}            = 1;
+		$t_options{loop_context_vars}      = 1;
+		$t_options{path}                   = \@template_dirs;
+		$t_options{search_path_on_include} = 1;
+
+		if ( defined( $options->{inline} ) ) {
+			$t_options{scalarref} = \$options->{inline};
+		}
+		elsif ( defined( $options->{template} ) ) {
+			if ( defined( my $path = $r->template_path($options) ) ) {
+				$t_options{filename} = $path;
+				$t_options{cache}    = 1;
+			}
+			else {
+				$t_options{scalarref} = $r->get_data_template($options);
+			}
+
+		}
+
+		$t = HTML::Template::Pro->new(
+			%t_options,
+			%{ $conf->{tmpl_opts} || {} },
+			%{ delete $tmpl_params{tmpl_opts} || {} }
+		);
+
+	}
+	unless ($t) { $r->render_exception("ERROR: No template created"); }
 
 	# sanity params removing scalar inside arrayref
 	foreach ( keys %tmpl_params ) {
@@ -60,14 +95,6 @@ sub render_tmpl {
 			&& $tmpl_params{$_} > 0
 			&& $tmpl_params{$_}->[0] ne 'HASH' );
 	}
-
-	my $t = HTML::Template::Pro->new(
-		%t_options,
-		%{ $conf->{tmpl_opts} || {} },
-		%{ delete $tmpl_params{tmpl_opts} || {} }
-	);
-
-	unless ($t) { $r->render_exception("ERROR: No template created"); }
 
 	$t->param(%tmpl_params);
 
@@ -102,12 +129,17 @@ Mojolicious::Plugin::HTMLTemplateProRenderer - Mojolicious Plugin
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::HTMLTemplateProRenderer> is a L<Mojolicious> plugin to use L<HTML::Template::Pro> module in your Mojo projects.
+L<Mojolicious::Plugin::HTMLTemplateProRenderer> is a L<Mojolicious> plugin
+to use L<HTML::Template::Pro> and L<HTML::Template::Pro::Extension>
+modules in your Mojo projects.
 
 L<HTML::Template::Pro> is a fast lightweight C/Perl+XS reimplementation of L<HTML::Template> (as of 2.9) and L<HTML::Template::Expr> (as of 0.0.7). 
 It is not intended to be a complete replacement, but to be a fast implementation of L<HTML::Template> if you don't need querying, the extended facility of L<HTML::Template>.
 
 Designed for heavy upload, resource limitations, abcence of L<mod_perl>.
+
+L<HTML::Template::Pro::Extension> is a pluggable extension syntax module
+for L<HTML::Template::Pro>.
 
 =head1 METHODS
 
@@ -129,6 +161,12 @@ These are options for L<Mojolicious::Plugin::HTMLTemplateProRenderer>
   $self->render('template', handler => 'tmpl',use_home_template => 1);
 
 Templates are found starting from home base app path other than home_app/templates path.
+
+=head2 C<use_extension>
+
+  $self->render('template', handler => 'tmpl',use_extension => 1, plugins => ['SLASH_VAR']
+
+Enable use of L<HTML::Template::Pro::Extension> and use of plugins.
 
 =head1 SEE ALSO
 
