@@ -93,7 +93,7 @@ sub render_tmpl {
 		delete $tmpl_params{$_}
 		  if ( ( ref $tmpl_params{$_} eq 'ARRAY' )
 			&& $tmpl_params{$_} > 0
-			&& $tmpl_params{$_}->[0] ne 'HASH' );
+			&& ref($tmpl_params{$_}->[0]) ne 'HASH' );
 	}
 
 	$t->param(%tmpl_params);
@@ -114,7 +114,7 @@ Mojolicious::Plugin::HTMLTemplateProRenderer - Mojolicious Plugin
   $self->plugin('HTMLTemplateProRenderer');
 
 
-  # Mojolicious::Lite
+  # Mojolicious::Lite 
   plugin 'HTMLTemplateProRenderer';
 
   # Render HTML::Template::Pro handler and post 'utf8 => 1' option for next HTML::Template::Pro->new call
@@ -126,6 +126,26 @@ Mojolicious::Plugin::HTMLTemplateProRenderer - Mojolicious Plugin
 
   # Set default options for all HTML::Template::Pro->new calls
   plugin 'HTMLTemplateProRenderer', tmpl_opts => {blind_cache => 1, open_mode => '<:encoding(UTF-16)'};
+
+  # Set use of L<HTML::Template::Pro::Extension>
+  plugin 'HTMLTemplateProRenderer', tmpl_opts => {use_extension => 1};
+
+  # render inline L<HTML::Template::Pro::Extension> using SLASH_VAR extension
+  get '/slash_var' => sub {
+    my $self = shift;
+    $self->stash(foo => 'bar');
+    $self->render(inline => '<p><TMPL_VAR NAME="foo">this will be deleted</TMPL_VAR></p>',
+      handler => 'tmpl', plugins => ['SLASH_VAR']);
+  };
+
+  # render a loop
+  get '/' => sub {
+    my $self = shift;
+    my $test = [{row => 'First row'},{row => 'Second row'}];
+    $self->stash(loop => $test);
+    $self->render(inline => '<ul><TMPL_LOOP NAME="loop"><li><TMPL_VAR NAME="row"></li></TMPL_LOOP></ul>',
+      handler => 'tmpl');
+  };
 
 =head1 DESCRIPTION
 
