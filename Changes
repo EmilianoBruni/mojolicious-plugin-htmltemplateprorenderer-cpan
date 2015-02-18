@@ -1,5 +1,8 @@
 Revision history for Perl module Mojolicious::Plugin::HTMLTemplateProRenderer
 
+0.04 Wed Feb 18 10:40:50 CET 2015
+    - Add loop test
+
 0.03 Wed Feb 18 10:20:58 CET 2015
     - Add support for HTML::Template::Pro::Extension
 	- Solved a bug in TMPL_LOOP
