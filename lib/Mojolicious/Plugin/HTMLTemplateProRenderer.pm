@@ -6,12 +6,18 @@ use Mojo::Base 'Mojolicious::Plugin';
 use HTML::Template::Pro;
 use HTML::Template::Pro::Extension;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub register {
 	my ( $self, $app, $conf ) = @_;
 	$self->{plugin_config} = $conf;
-	$app->renderer->add_handler( tmpl => sub { $self->render_tmpl(@_) } );
+	$app->renderer->add_handler( tmpl => sub { 
+		my ($r, $c, $out, $opt) = @_;
+		# Fallback to ep template if pages raise exceptions
+		return $r->handlers->{ep} 
+			if ($opt->{template} =~ /(exception)|(not_found)|(development)/);
+		$self->render_tmpl(@_) 
+	} );
 }
 
 sub render_tmpl {
